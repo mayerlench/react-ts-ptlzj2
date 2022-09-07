@@ -1,4 +1,4 @@
-import flatten from 'ramda/src/flatten';
+import { flatten } from 'ramda';
 import * as React from 'react';
 import { useTimer } from 'use-timer';
 import './style.css';
