@@ -19,6 +19,7 @@ type ThreatLevel = {
 export default function App() {
   const [threat, setThreat] = React.useState<ThreatLevel>(null);
   const [threats, setThreats] = React.useState<ThreatLevel[]>(null);
+  const [autoRepeat, setAutoRepeat] = React.useState(false);
   const [assessTime, setAssessTime] = React.useState(5);
 
   const [delayedStart, setDelayedStart] = React.useState(5);
@@ -27,8 +28,7 @@ export default function App() {
     'countdown' | 'started' | 'completed' | null
   >(null);
 
-  const { start, advanceTime, time } = useTimer({
-    initialTime: 1,
+  const { start, advanceTime, time, reset } = useTimer({
     endTime: 0,
     timerType: 'DECREMENTAL',
     onTimeOver: () => {
@@ -37,7 +37,6 @@ export default function App() {
   });
 
   const countdown = useTimer({
-    initialTime: delayedStart,
     endTime: 0,
     timerType: 'DECREMENTAL',
     onTimeOver: () => {
@@ -52,7 +51,8 @@ export default function App() {
   const startCountdown = () => {
     setGameStatus('countdown');
     countdown.start();
-    countdown.advanceTime(countdown.time + -delayedStart);
+    console.log('delayedStart', -delayedStart);
+    countdown.advanceTime(-delayedStart);
   };
 
   const setNextThreatLevel = (threats: ThreatLevel[]) => {
@@ -60,13 +60,16 @@ export default function App() {
     console.log(next);
     if (!next) {
       countdown.reset();
+
+      if (autoRepeat) return startCountdown();
+
       return setGameStatus('completed');
     }
     setThreat(next);
 
     setThreats(threats.slice(1));
     start();
-    advanceTime(-next.duration + 1);
+    advanceTime(-next.duration);
   };
 
   const startGame = () => {
@@ -77,6 +80,9 @@ export default function App() {
   };
 
   const stopGame = () => {
+    reset();
+    countdown.reset();
+    setThreats(null);
     setThreat(null);
     setGameStatus(null);
   };
@@ -146,16 +152,39 @@ export default function App() {
                 }}
               />
             </div>
+            <div className="form-check d-flex flex-row justify-content-center  mt-1">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                value=""
+                id="flexCheckChecked"
+                checked={autoRepeat}
+                onChange={(e) => setAutoRepeat(e.target.checked)}
+              />
+              <label
+                className="form-check-label ms-1"
+                htmlFor="flexCheckChecked"
+              >
+                Repeat
+              </label>
+            </div>
             <button
               onClick={startCountdown}
               className="btn btn-primary btn-lg mt-2"
             >
-              Start
+              START
             </button>
           </div>
         )}
         {gameStatus === 'countdown' && (
           <label className="m-3">{countdown.time} second delayed start</label>
+        )}
+        {(gameStatus === 'started' || gameStatus === 'countdown') && (
+          <div>
+            <button onClick={stopGame} className="btn btn-danger btn-lg mt-4">
+              STOP
+            </button>
+          </div>
         )}
       </div>
     </div>
